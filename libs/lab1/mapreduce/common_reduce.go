@@ -1,5 +1,12 @@
 package mapreduce
 
+import (
+	"fmt"
+	"os"
+	"encoding/json"
+	"sort"
+)
+
 // doReduce does the job of a reduce worker: it reads the intermediate
 // key/value pairs (produced by the map phase) for this task, sorts the
 // intermediate key/value pairs by key, calls the user-defined reduce function
@@ -10,6 +17,51 @@ func doReduce(
 	nMap int, // the number of map tasks that were run ("M" in the paper)
 	reduceF func(key string, values []string) string,
 ) {
+	//fmt.Println("do %d reduce task\n", reduceTaskNumber)
+
+	midBuckets := make(map[string][]string)
+	for n:=0; n<nMap; n++ {
+		cachedFileName := reduceName(jobName, n, reduceTaskNumber)
+		file, e := os.Open(cachedFileName)
+		defer file.Close()
+		if e != nil {
+			fmt.Println(e)
+		}
+
+		decoder := json.NewDecoder(file)
+		var kv KeyValue
+		for e1:=decoder.Decode(&kv) ; e1==nil; e1=decoder.Decode(&kv){
+			list := midBuckets[kv.Key]
+			if list == nil {
+				list = make([]string, 0)
+			}
+			list = append(list, kv.Value)
+			midBuckets[kv.Key] = list
+		}
+	}
+
+	// operate reduceF on keyvalue.
+	resultBuckets := make(map[string]*KeyValue)
+	for key, strings := range midBuckets {
+		resultBuckets[key] = &KeyValue{Key:key, Value:reduceF(key, strings)}
+	}
+
+	// write result to file.
+	resultFileName := mergeName(jobName, reduceTaskNumber)
+	resultFile, err := os.Create(resultFileName)
+	defer resultFile.Close()
+	if err != nil {
+		fmt.Println(err)
+	}
+	encoder := json.NewEncoder(resultFile)
+	sortedkeys := make([]string, 0)
+	for k, _ := range resultBuckets {
+		sortedkeys = append(sortedkeys, k)
+	}
+	sort.Strings(sortedkeys)
+	for _, key := range sortedkeys {
+		encoder.Encode(resultBuckets[key])
+	}
 	// TODO:
 	// You will need to write this function.
 	// You can find the intermediate file for this reduce task from map task number
@@ -45,4 +97,8 @@ func doReduce(
 	// 　S2：获取中间文件的数据(对多个map产生的文件更加值合并)
 	// 　S3：打开文件（mergeName获取文件名），将用于存储Reduce任务的结果
 	// 　S4：合并结果之后(S2)，进行reduceF操作, work count的操作将结果累加，也就是word出现在这个文件中出现的次数
+}
+
+func funcName(file *os.File) *json.Decoder {
+	return json.NewDecoder(file)
 }

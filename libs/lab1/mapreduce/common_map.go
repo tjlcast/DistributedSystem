@@ -19,7 +19,7 @@ func doMap(
 	nReduce int, // the number of reduce task that will be run ("R" in the paper)
 	mapF func(file string, contents string) []KeyValue,
 ) {
-	fmt.Printf("do map on file(%s) start.", inFile)
+	//fmt.Printf("do %d map task on file(%s) start.\n", mapTaskNumber, inFile)
 	file, e := os.Open(inFile)
 	if e != nil {
 		fmt.Println(e)
@@ -37,7 +37,7 @@ func doMap(
 	cacheFiles := make([]*os.File, nReduce)
 	cacheFilesEncoder := make([]*json.Encoder, nReduce)
 	for i := range cacheFiles {
-		fileName := reduceName(jobName, mapTaskNumber, nReduce)
+		fileName := reduceName(jobName, mapTaskNumber, i)
 		file, err := os.Create(fileName)
 		defer file.Close()
 		if err != nil {

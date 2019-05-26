@@ -4,6 +4,9 @@ import (
 	"os"
 	"fmt"
 	"DistributedSystem/libs/lab1/mapreduce"
+	"strings"
+	"unicode"
+	"strconv"
 )
 
 // The mapping function is called once for each piece of the input.
@@ -11,6 +14,16 @@ import (
 // and the value is the file's contents. The return value should be a slice of
 // key/value pairs, each represented by a mapreduce.KeyValue.
 func mapF(document string, value string) (res []mapreduce.KeyValue) {
+	ans := make([]mapreduce.KeyValue, 0)
+	words := strings.FieldsFunc(value, func(r rune) bool {
+		return !unicode.IsLetter(r)
+	})
+
+	for _, word := range words {
+		ans = append(ans, mapreduce.KeyValue{word, "1"})
+	}
+
+	return ans
 	// TODO: you have to write this function.
 	// 在wordcount的例子中mapF的功能应该是string中获取到单词（关注下strings.FieldsFunc打用法吧），
 	// 返回的结构应该类似KeyValue{w, "1"}
@@ -20,8 +33,14 @@ func mapF(document string, value string) (res []mapreduce.KeyValue) {
 // list of that key's string value (merged across all inputs). The return value
 // should be a single output value for that key.
 func reduceF(key string, values []string) string {
+	count := 0
+	for _, v := range values {
+		i, _ := strconv.Atoi(v)
+		count += i
+	}
 	// TODO: you also have to write this function.
 	// reduceF对每个key调用，然后处理values,在这个例子中，相加全部的１就是单词出现打次数来
+	return strconv.Itoa(len(values))
 }
 
 // Can be run in 3 ways:
@@ -33,6 +52,9 @@ func main() {
 		fmt.Printf("%s: see usage comments in file\n", os.Args[0])
 	} else if os.Args[1] == "master" {
 		var mr *mapreduce.Master
+		for _, f := range os.Args[3:] {
+			fmt.Println(f)
+		}
 		if os.Args[2] == "sequential" {
 			mr = mapreduce.Sequential("wcseq", os.Args[3:], 3, mapF, reduceF)
 		} else {
