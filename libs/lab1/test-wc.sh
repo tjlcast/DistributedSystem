@@ -9,3 +9,8 @@ else
   echo "Passed test" > /dev/stderr
 fi
 
+# remove mapreduce produce mid-files.
+echo "remove mid-files."
+rm mrtmp.*
+rm diff.out
+
