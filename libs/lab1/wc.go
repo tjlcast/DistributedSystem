@@ -40,7 +40,7 @@ func reduceF(key string, values []string) string {
 	}
 	// TODO: you also have to write this function.
 	// reduceF对每个key调用，然后处理values,在这个例子中，相加全部的１就是单词出现打次数来
-	return strconv.Itoa(len(values))
+	return strconv.Itoa(count)
 }
 
 // Can be run in 3 ways:
