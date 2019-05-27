@@ -159,6 +159,9 @@ func TestSequentialMany(t *testing.T) {
 	cleanup(mr)
 }
 
+/**
+	mapreduce part.3
+ */
 func TestBasic(t *testing.T) {
 	mr := setup()
 	for i := 0; i < 2; i++ {
